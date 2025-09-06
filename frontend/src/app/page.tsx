@@ -51,8 +51,9 @@ export default function Home() {
         // Nếu đã đăng nhập, lấy số dư và số giao dịch của tài khoản
         const current = localStorage.getItem("mycoin_current");
         if (current) {
+          // Lấy số dư động từ API wallets (tính qua UTXO)
           const wallet = wallets.find((w: any) => w.publicKey === current);
-          setBalance(wallet ? wallet.balance : null);
+          setBalance(wallet ? wallet.balance : 0);
           const userTxs = txs.filter(
             (tx: any) => tx.fromAddress === current || tx.toAddress === current
           );
@@ -202,7 +203,13 @@ export default function Home() {
                     Số dư
                   </div>
                   <div className="text-3xl font-bold text-blue-600 mt-2">
-                    {loading ? "..." : balance ?? "0"}
+                    {loading
+                      ? "..."
+                      : typeof balance === "number"
+                      ? balance.toLocaleString(undefined, {
+                          maximumFractionDigits: 8,
+                        })
+                      : "0"}
                   </div>
                 </div>
                 <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">

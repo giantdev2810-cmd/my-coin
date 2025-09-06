@@ -41,8 +41,8 @@ export default function TransactionsPage() {
       key: "index",
       render: (_: any, __: any, idx: number) => idx + 1,
     },
-    { title: "Từ (From)", dataIndex: "fromAddress", key: "fromAddress" },
-    { title: "Đến (To)", dataIndex: "toAddress", key: "toAddress" },
+    { title: "Người gửi", dataIndex: "fromAddress", key: "fromAddress" },
+    { title: "Người nhận", dataIndex: "toAddress", key: "toAddress" },
     {
       title: "Số lượng",
       dataIndex: "amount",

@@ -4,20 +4,16 @@ import { toast } from "react-toastify";
 import { Form, Input, Select, Button, Card } from "antd";
 
 export default function SendCoinPage() {
-  const [accounts, setAccounts] = useState<
-    { publicKey: string; privateKey: string }[]
-  >([]);
-  const [fromAddress, setFromAddress] = useState("");
+  const [fromAddress, setFromAddress] = useState<string | null>(null);
   const [toAddress, setToAddress] = useState("");
   const [amount, setAmount] = useState(0);
   const [consensus, setConsensus] = useState<"pow" | "pos">("pow");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Lấy danh sách tài khoản đã lưu
-    const acc = JSON.parse(localStorage.getItem("mycoin_accounts") || "[]");
-    setAccounts(acc);
-    if (acc.length > 0) setFromAddress(acc[0].publicKey);
+    // Lấy tài khoản đang đăng nhập từ localStorage
+    const current = localStorage.getItem("mycoin_current");
+    setFromAddress(current);
   }, []);
 
   const handleSend = async (e: React.FormEvent) => {
@@ -49,20 +45,9 @@ export default function SendCoinPage() {
       <h2 className="text-2xl font-bold mb-4">Gửi coin</h2>
       <Card className="w-full max-w-md" title="Gửi coin" bordered>
         <Form layout="vertical" onSubmitCapture={handleSend}>
-          <Form.Item label="Chọn tài khoản gửi (Public Key)" required>
-            <Select
-              value={fromAddress}
-              onChange={setFromAddress}
-              placeholder="Chọn tài khoản gửi"
-              showSearch
-              optionFilterProp="children"
-            >
-              {accounts.map((acc) => (
-                <Select.Option key={acc.publicKey} value={acc.publicKey}>
-                  {acc.publicKey}
-                </Select.Option>
-              ))}
-            </Select>
+          {/* Người gửi: chỉ hiển thị, không cho chọn, phải disable */}
+          <Form.Item label="Người gửi (Tài khoản đang đăng nhập)">
+            <Input value={fromAddress ?? ""} disabled readOnly />
           </Form.Item>
           <Form.Item label="Địa chỉ nhận (Public Key)" required>
             <Input

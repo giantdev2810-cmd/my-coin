@@ -8,7 +8,7 @@ class Wallet {
       .createHash("sha256")
       .update(this.privateKey)
       .digest("hex");
-    this.balance = 0;
+    // Đã bỏ thuộc tính balance, số dư sẽ tính qua UTXO
   }
 }
 

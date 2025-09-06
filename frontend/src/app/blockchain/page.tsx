@@ -41,6 +41,7 @@ export default function BlockchainPage() {
       title: "Previous Hash",
       dataIndex: "previousHash",
       key: "previousHash",
+      width: 100,
     },
     {
       title: "Data",

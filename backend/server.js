@@ -11,7 +11,7 @@ app.use(cors());
 
 const wallets = [];
 const transactions = [];
-// Cho phép chọn consensus khi khởi tạo blockchain, mặc định là PoW
+let utxos = []; // Danh sách UTXO toàn hệ thống
 let blockchain = new Blockchain("pow", wallets);
 
 // API: Chọn cơ chế xác thực cho blockchain
@@ -27,23 +27,34 @@ app.post("/blockchain/consensus", (req, res) => {
 // Create wallet
 app.post("/wallet/create", (req, res) => {
   const wallet = new Wallet();
-  // Nếu là ví đầu tiên, cấp 1000 coin
-  if (wallets.length === 0) {
-    wallet.balance = 1000;
-  }
   wallets.push(wallet);
+  // Nếu là ví đầu tiên, cấp 1000 coin bằng UTXO
+  if (wallets.length === 1) {
+    const utxo = {
+      id: Date.now().toString(),
+      toAddress: wallet.publicKey,
+      amount: 1000,
+      spent: false,
+    };
+    utxos.push(utxo);
+  }
   res.json(wallet);
 });
 
-// Get all wallets
+// Get all wallets + balance theo UTXO
 app.get("/wallets", (req, res) => {
-  res.json(wallets);
+  const result = wallets.map((w) => {
+    const balance = utxos
+      .filter((u) => u.toAddress === w.publicKey && !u.spent)
+      .reduce((sum, u) => sum + u.amount, 0);
+    return { ...w, balance };
+  });
+  res.json(result);
 });
 
-// Send coin (cho phép chọn consensus cho block này)
+// Send coin (UTXO)
 app.post("/transaction/send", (req, res) => {
   const { fromAddress, toAddress, amount, consensus } = req.body;
-  // Kiểm tra số dư ví gửi
   const sender = wallets.find((w) => w.publicKey === fromAddress);
   if (!sender) {
     return res.status(400).json({ error: "Không tìm thấy ví gửi." });
@@ -51,17 +62,55 @@ app.post("/transaction/send", (req, res) => {
   if (typeof amount !== "number" || amount <= 0) {
     return res.status(400).json({ error: "Số lượng coin không hợp lệ." });
   }
-  if ((sender.balance ?? 0) < amount) {
+  // Tìm UTXO chưa dùng của ví gửi
+  const senderUtxos = utxos.filter(
+    (u) => u.toAddress === fromAddress && !u.spent
+  );
+  const total = senderUtxos.reduce((sum, u) => sum + u.amount, 0);
+  if (total < amount) {
     return res.status(400).json({ error: "Số dư không đủ để gửi coin." });
   }
-  // Trừ số dư ví gửi, cộng số dư ví nhận
-  sender.balance -= amount;
-  const receiver = wallets.find((w) => w.publicKey === toAddress);
-  if (receiver) {
-    receiver.balance += amount;
+  // Chọn UTXO đủ số dư
+  let usedUtxos = [];
+  let accumulated = 0;
+  for (const u of senderUtxos) {
+    usedUtxos.push(u);
+    accumulated += u.amount;
+    if (accumulated >= amount) break;
   }
-  const tx = new Transaction(fromAddress, toAddress, amount);
+  // Đánh dấu UTXO đã dùng
+  usedUtxos.forEach((u) => (u.spent = true));
+
+  // Tạo output mới cho người nhận
+  const receiverUtxo = {
+    id: Date.now().toString() + Math.random(),
+    toAddress,
+    amount,
+    spent: false,
+  };
+  utxos.push(receiverUtxo);
+
+  // Nếu dư, trả lại cho người gửi
+  if (accumulated > amount) {
+    const changeUtxo = {
+      id: Date.now().toString() + Math.random(),
+      toAddress: fromAddress,
+      amount: accumulated - amount,
+      spent: false,
+    };
+    utxos.push(changeUtxo);
+  }
+
+  // Tạo transaction với input là các UTXO đã dùng, output là các UTXO mới
+  const tx = new Transaction(
+    fromAddress,
+    toAddress,
+    amount,
+    usedUtxos.map((u) => u.id), // input
+    [receiverUtxo] // output
+  );
   transactions.push(tx);
+
   try {
     blockchain.addBlock(tx, consensus);
     res.json({ status: "success", tx });

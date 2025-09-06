@@ -13,11 +13,12 @@ class Block {
 }
 
 class Blockchain {
-  constructor(consensus = "pow", wallets = []) {
+  constructor(consensus = "pow", wallets = [], utxos = []) {
     this.chain = [this.createGenesisBlock()];
     this.difficulty = 2;
     this.consensus = consensus; // 'pow' hoặc 'pos'
     this.wallets = wallets; // Danh sách ví để chọn validator cho PoS
+    this.utxos = utxos; // Danh sách UTXO để PoS dùng tính stake
   }
 
   createGenesisBlock() {
@@ -88,33 +89,35 @@ class Blockchain {
   }
 
   stakeBlock(data) {
-    // Chọn validator ngẫu nhiên dựa trên số dư (stake)
+    // Chọn validator ngẫu nhiên dựa trên số dư (stake) tính qua UTXO
     if (!this.wallets || this.wallets.length === 0) {
       throw new Error("No wallets available for PoS");
     }
-    // Tính tổng stake
-    const totalStake = this.wallets.reduce(
-      (sum, w) => sum + (w.balance || 0),
-      0
-    );
+    // Tính tổng stake qua UTXO
+    const stakes = this.wallets.map((w) => ({
+      publicKey: w.publicKey,
+      stake: this._getWalletStake(w.publicKey),
+    }));
+    const totalStake = stakes.reduce((sum, s) => sum + s.stake, 0);
+
+    let validator;
     if (totalStake === 0) {
       // Nếu chưa có ai có coin, chọn ngẫu nhiên
-      const validator =
+      validator =
         this.wallets[Math.floor(Math.random() * this.wallets.length)].publicKey;
-      return this._createStakeBlock(data, validator);
-    }
-    // Chọn validator theo tỉ lệ stake
-    let r = Math.random() * totalStake;
-    let acc = 0;
-    let validator = null;
-    for (const w of this.wallets) {
-      acc += w.balance || 0;
-      if (r <= acc) {
-        validator = w.publicKey;
-        break;
+    } else {
+      // Chọn validator theo tỉ lệ stake
+      let r = Math.random() * totalStake;
+      let acc = 0;
+      for (const s of stakes) {
+        acc += s.stake;
+        if (r <= acc) {
+          validator = s.publicKey;
+          break;
+        }
       }
+      if (!validator) validator = this.wallets[0].publicKey;
     }
-    if (!validator) validator = this.wallets[0].publicKey;
     return this._createStakeBlock(data, validator);
   }
 
@@ -144,6 +147,14 @@ class Blockchain {
     );
     this.chain.push(newBlock);
     return newBlock;
+  }
+
+  // Tính stake của ví dựa vào UTXO chưa dùng
+  _getWalletStake(publicKey) {
+    if (!this.utxos) return 0;
+    return this.utxos
+      .filter((u) => u.toAddress === publicKey && !u.spent)
+      .reduce((sum, u) => sum + u.amount, 0);
   }
 }
 
