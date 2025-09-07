@@ -7,8 +7,7 @@ Hệ thống tiền điện tử cá nhân mô phỏng Blockchain với giao di�
 - Gửi coin cho địa chỉ khác
 - Xem lịch sử giao dịch
 - Chọn thuật toán Proof of Work/Proof of Stake cho blockchain
-- Giao diện web thân thiện, hiện đại (Ant Design, Toastify)
-- Thông báo popup, định dạng thời gian giao dịch
+- Giao diện web thân thiện, hiện đại
 - Ghi nhận quá trình làm việc lên Github
 - Video hướng dẫn sử dụng
 
