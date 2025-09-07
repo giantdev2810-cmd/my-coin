@@ -15,7 +15,6 @@ Hệ thống tiền điện tử cá nhân mô phỏng Blockchain với giao di�
 
 - `backend/`: Node.js, Express, xử lý blockchain, ví, giao dịch, thuật toán PoW/PoS
 - `frontend/`: Next.js (TypeScript), Ant Design, Toastify, giao diện web tương tự MyEtherWallet và Etherscan
-- `docs/`: Tài liệu tham khảo
 
 ## Công nghệ sử dụng
 
