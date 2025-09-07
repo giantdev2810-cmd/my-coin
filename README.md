@@ -61,12 +61,4 @@ Truy cập giao diện web tại: http://localhost:3001
 
 ### 4. Video hướng dẫn
 
-Video demo sử dụng hệ thống sẽ được bổ sung tại thư mục `docs/` hoặc link Github.
-
-### 5. Github
-
-Quá trình làm việc, commit, source code đều được ghi nhận trên Github.
-
----
-
-Nếu có thắc mắc hoặc cần hỗ trợ, vui lòng liên hệ qua Github hoặc email cá nhân.
+Video demo: https://youtu.be/05agi-CAH7o
